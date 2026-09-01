@@ -84,7 +84,7 @@ export interface ActivityEvent {
   actor: string;
   action: string;
   target: string;
-  amount?: number;
+  amount?: number | undefined;
   network: string;
 }
 
