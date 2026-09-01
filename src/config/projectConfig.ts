@@ -16,11 +16,10 @@ export const projectConfig = {
   NETWORK: "ARC",
   PAYMENT_ASSET: "USDC",
 
-  /** No contract deployed yet — never render a fake address. */
-  CONTRACT_ADDRESS: env["VITE_CONTRACT_ADDRESS"] ?? "COMING_SOON",
+  CONTRACT_ADDRESS: env["VITE_CONTRACT_ADDRESS"] ?? "0xcdeEFAF3A7f2fefDF89d5A919b76345b0e434b19",
 
-  BUY_URL: env["VITE_BUY_URL"] ?? "https://RADARDEX.pro",
-  CHART_URL: env["VITE_CHART_URL"] ?? "https://RADARDEX.pro",
+  BUY_URL: env["VITE_BUY_URL"] ?? "https://radardex.pro/#0xcdeEFAF3A7f2fefDF89d5A919b76345b0e434b19",
+  CHART_URL: env["VITE_CHART_URL"] ?? "https://radardex.pro/#0xcdeEFAF3A7f2fefDF89d5A919b76345b0e434b19",
 
   /** Public X/Twitter handle for ArcPay Agent. */
   X_URL: env["VITE_X_URL"] ?? "https://x.com/ArcPayAgent",
