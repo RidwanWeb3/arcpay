@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as ProofRouteImport } from './routes/proof'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as AgentsIndexRouteImport } from './routes/agents.index'
 import { Route as AgentsIdRouteImport } from './routes/agents.$id'
@@ -44,6 +45,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProofRoute = ProofRouteImport.update({
+  id: '/proof',
+  path: '/proof',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TerminalRoute = TerminalRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
   '/agents/create': typeof AgentsCreateRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/activity': typeof ActivityRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
   '/agents/create': typeof AgentsCreateRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
   '/agents/create': typeof AgentsCreateRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/dashboard'
     | '/payments'
+    | '/proof'
     | '/terminal'
     | '/agents/$id'
     | '/agents/create'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/dashboard'
     | '/payments'
+    | '/proof'
     | '/terminal'
     | '/agents/$id'
     | '/agents/create'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/dashboard'
     | '/payments'
+    | '/proof'
     | '/terminal'
     | '/agents/$id'
     | '/agents/create'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   DashboardRoute: typeof DashboardRoute
   PaymentsRoute: typeof PaymentsRoute
+  ProofRoute: typeof ProofRoute
   TerminalRoute: typeof TerminalRoute
   AgentsIdRoute: typeof AgentsIdRoute
   AgentsCreateRoute: typeof AgentsCreateRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proof': {
+      id: '/proof'
+      path: '/proof'
+      fullPath: '/proof'
+      preLoaderRoute: typeof ProofRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terminal': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityRoute: ActivityRoute,
   DashboardRoute: DashboardRoute,
   PaymentsRoute: PaymentsRoute,
+  ProofRoute: ProofRoute,
   TerminalRoute: TerminalRoute,
   AgentsIdRoute: AgentsIdRoute,
   AgentsCreateRoute: AgentsCreateRoute,
