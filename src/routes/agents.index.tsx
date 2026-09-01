@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
-import { AGENTS } from "@/lib/demoData";
+import { useAgents } from "@/lib/live/adapters";
 import { AgentCard } from "@/components/kit/cards";
 import { CyberButton, LinkButton, MetricCard } from "@/components/kit/primitives";
 
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/agents/")({
       {
         name: "description",
         content:
-          "Browse ArcPay Agent's demo agent registry: wallets, spending policies, task history and settlement activity on ARC.",
+          "Browse ArcPay Agent's agent registry: wallets, spending policies, task history and settlement activity on ARC.",
       },
       { property: "og:title", content: "Agent Control Center — ArcPay Agent" },
       { property: "og:description", content: "Every agent carries its own wallet, budget ceiling and audit log." },
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/agents/")({
 const FILTERS = ["ALL", "ONLINE", "IDLE", "BUSY", "OFFLINE"] as const;
 
 function AgentsPage() {
+  const { data: AGENTS, isFetching, refetch } = useAgents();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("ALL");
   const [q, setQ] = useState("");
 
@@ -34,7 +35,7 @@ function AgentsPage() {
       AGENTS.filter((a) => (filter === "ALL" ? true : a.status === filter)).filter((a) =>
         (a.name + a.type + a.purpose).toLowerCase().includes(q.toLowerCase()),
       ),
-    [filter, q],
+    [AGENTS, filter, q],
   );
 
   const online = AGENTS.filter((a) => a.status === "ONLINE").length;

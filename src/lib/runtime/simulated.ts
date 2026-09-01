@@ -41,10 +41,10 @@ export const DESCRIPTORS: ServiceDescriptor[] = SERVICES.map((s) => ({
   provider: s.provider,
   endpoint: s.endpoint,
   price: s.price,
-  asset: s.method,
+  asset: s.paymentAsset,
   unit: s.unit,
   network: s.network,
-  latencyMs: s.responseTimeMs,
+  latencyMs: s.latency,
   status: s.status,
   capabilities: s.capabilities,
 }));
@@ -103,7 +103,10 @@ export const simulatedPolicyEngine: PolicyEngine = {
         remainingDaily,
       };
     }
-    if (policy.allowedServices.length > 0 && !policy.allowedServices.includes(challenge.serviceId)) {
+    if (
+      policy.allowedServices.length > 0 &&
+      !policy.allowedServices.includes(challenge.serviceId)
+    ) {
       return {
         approved: false,
         code: "DENIED_SERVICE_NOT_ALLOWED",
@@ -227,7 +230,11 @@ export const simulatedServiceClient: ServiceClient = {
     await wait(Math.min(400, service.latencyMs));
     const body =
       BODIES[service.id]?.() ??
-      JSON.stringify({ service: service.id, ok: true, receipt: receipt.id, mode: "SIMULATED" }, null, 2);
+      JSON.stringify(
+        { service: service.id, ok: true, receipt: receipt.id, mode: "SIMULATED" },
+        null,
+        2,
+      );
     return {
       serviceId: service.id,
       httpStatus: 200,

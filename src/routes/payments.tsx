@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
-import { AGENTS, SERVICES } from "@/lib/demoData";
+import { useAgents, useServices, usePayments } from "@/lib/live/adapters";
 import { CyberButton, CyberCard, DataPanel, MetricCard, LinkButton } from "@/components/kit/primitives";
 import { PaymentFlow, PAYMENT_STAGES } from "@/components/kit/PaymentFlow";
 import { TerminalWindow, LogLine } from "@/components/kit/TerminalWindow";
@@ -26,6 +26,9 @@ export const Route = createFileRoute("/payments")({
 });
 
 function PaymentsPage() {
+  const { data: AGENTS } = useAgents();
+  const { data: SERVICES } = useServices();
+  const { data: PAYMENTS } = usePayments();
   const [agentId, setAgentId] = useState(AGENTS[0]!.id);
   const [serviceId, setServiceId] = useState(SERVICES[0]!.id);
   const [stage, setStage] = useState(-1);
@@ -35,6 +38,7 @@ function PaymentsPage() {
   const agent = AGENTS.find((a) => a.id === agentId)!;
   const service = SERVICES.find((s) => s.id === serviceId)!;
   const withinPolicy = service.price <= agent.policy.maxPerTransaction;
+  void PAYMENTS;
 
   useEffect(() => {
     if (stage < 0 || stage >= PAYMENT_STAGES.length) return;

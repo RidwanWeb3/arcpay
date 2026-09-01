@@ -19,7 +19,9 @@ export function AgentCard({ agent }: { agent: Agent }) {
     <CyberCard interactive className="flex flex-col">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-4">
         <div className="min-w-0">
-          <h3 className="truncate font-mono text-sm font-semibold tracking-[0.12em] text-silver">{agent.name}</h3>
+          <h3 className="truncate font-mono text-sm font-semibold tracking-[0.12em] text-silver">
+            {agent.name}
+          </h3>
           <p className="label-mono mt-1">{agent.type}</p>
         </div>
         <AgentStatus status={agent.status} />
@@ -46,7 +48,9 @@ export function AgentCard({ agent }: { agent: Agent }) {
         </div>
         <div className="mt-4">
           <div className="label-mono">LAST ACTION</div>
-          <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">{agent.lastAction}</p>
+          <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
+            {agent.lastAction}
+          </p>
         </div>
       </div>
 
@@ -62,39 +66,132 @@ export function AgentCard({ agent }: { agent: Agent }) {
   );
 }
 
-function Field({ label, value, sub, mono }: { label: string; value: string; sub?: string; mono?: boolean }) {
+function Field({
+  label,
+  value,
+  sub,
+  mono,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  mono?: boolean;
+}) {
   return (
     <div className="bg-background/40 p-3">
       <div className="label-mono">{label}</div>
-      <div className={cn("mt-1 truncate text-[12px] text-silver", mono !== false && "font-mono")}>{value}</div>
+      <div className={cn("mt-1 truncate text-[12px] text-silver", mono !== false && "font-mono")}>
+        {value}
+      </div>
       {sub ? <div className="label-mono mt-0.5 text-warning">{sub}</div> : null}
     </div>
   );
 }
 
 export function ServiceCard({ service }: { service: Service }) {
-  const tone = service.status === "AVAILABLE" ? "online" : service.status === "DEGRADED" ? "idle" : "offline";
+  const tone =
+    service.status === "AVAILABLE" ? "online" : service.status === "DEGRADED" ? "idle" : "offline";
+  const popularityTier =
+    service.popularity > 70000 ? "★★★" : service.popularity > 40000 ? "★★☆" : "★☆☆";
   return (
     <CyberCard interactive className="flex flex-col">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border p-4">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-silver">{service.name}</h3>
-          <p className="label-mono mt-1 text-accent">{service.category}</p>
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-sm font-semibold text-silver">{service.name}</h3>
+            <span
+              className="font-mono text-[10px] text-warning"
+              title={`Popularity ${service.popularity}`}
+            >
+              {popularityTier}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="label-mono text-accent">{service.category}</span>
+            <span className="label-mono">· {service.provider}</span>
+          </div>
         </div>
         <StatusIndicator tone={tone} label={service.status} />
       </div>
-      <div className="space-y-2 p-4 font-mono text-[11px]">
-        <Row k="PRICE" v={`$${service.price} / ${service.unit}`} />
-        <Row k="PAYMENT" v={`${service.method} · ${service.network}`} />
-        <Row k="PROVIDER" v={service.provider} />
-        <Row k="RESPONSE" v={`${service.responseTimeMs} ms`} />
+      <div className="grid grid-cols-2 gap-px bg-border/60">
+        <MetricField
+          label="PRICE"
+          value={`${service.price} ${service.paymentAsset}`}
+          sub={`PER ${service.unit.toUpperCase()}`}
+          tone="accent"
+        />
+        <MetricField
+          label="NETWORK"
+          value={service.network}
+          sub={`LAT ${service.latency}MS`}
+          tone="cyan"
+        />
+        <MetricField label="AVAILABILITY" value={`${service.availability}%`} sub={service.status} />
+        <MetricField
+          label="SETTLEMENT"
+          value={service.paymentMethod.settlement}
+          sub={service.pricing.tier}
+        />
       </div>
-      <div className="mt-auto border-t border-border p-3">
+      <div className="space-y-2 p-4">
+        <div className="label-mono">COMPATIBLE AGENTS</div>
+        <div className="flex flex-wrap gap-1">
+          {service.compatibility.slice(0, 3).map((c) => (
+            <span
+              key={c}
+              className="border border-border bg-surface-2/40 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.14em] text-silver/75"
+            >
+              {c.split(" ")[0]}
+            </span>
+          ))}
+          {service.compatibility.length > 3 ? (
+            <span className="border border-border bg-surface-2/40 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.14em] text-muted-foreground">
+              +{service.compatibility.length - 3}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+          {service.description}
+        </p>
+      </div>
+      <div className="mt-auto grid grid-cols-2 gap-2 border-t border-border p-3">
+        <LinkButton to={`/services/${service.id}`} size="sm" className="w-full">
+          INSPECT
+        </LinkButton>
         <LinkButton to={`/services/${service.id}`} size="sm" variant="primary" className="w-full">
           REQUEST
         </LinkButton>
       </div>
     </CyberCard>
+  );
+}
+
+function MetricField({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "accent" | "cyan";
+}) {
+  return (
+    <div className="bg-background/40 p-3">
+      <div className="label-mono">{label}</div>
+      <div
+        className={cn(
+          "mt-0.5 truncate font-mono text-[12px] tabular-nums",
+          tone === "accent" && "text-accent",
+          tone === "cyan" && "text-cyan",
+          tone === undefined && "text-silver",
+        )}
+      >
+        {value}
+      </div>
+      {sub ? <div className="label-mono mt-0.5">{sub}</div> : null}
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { CyberButton, CyberCard, DataPanel, LinkButton, StatusIndicator } from "@/components/kit/primitives";
 import { TerminalWindow } from "@/components/kit/TerminalWindow";
-import { SERVICES } from "@/lib/demoData";
+import { useServices } from "@/lib/live/adapters";
 import type { RiskMode } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ const CAPABILITIES = ["PAY", "VERIFY", "SETTLE", "DISCOVER", "RESEARCH", "ANALYZ
 const RISK: RiskMode[] = ["SAFE", "BALANCED", "AUTONOMOUS"];
 
 function CreateAgent() {
+  const { data: SERVICES } = useServices();
   const [name, setName] = useState("");
   const [purpose, setPurpose] = useState("");
   const [caps, setCaps] = useState<string[]>(["DISCOVER", "PAY"]);

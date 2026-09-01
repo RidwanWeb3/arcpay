@@ -7,7 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type ReactNode, useState } from "react";
+import { WagmiProvider } from "wagmi";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -17,6 +18,7 @@ import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { WalletProvider } from "@/hooks/useWallet";
 import { CyberCard, LinkButton, CyberButton } from "@/components/kit/primitives";
 import { BrandLogo } from "@/components/kit/cards";
+import { wagmiConfig } from "@/lib/arc/wagmiConfig";
 
 function ErrorFrame({
   code,
@@ -126,7 +128,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "Organization",
           name: "ArcPay Agent",
           alternateName: "APA",
-          description: "Payment infrastructure concept for autonomous agents on ARC, settling in USDC.",
+          description:
+            "Payment infrastructure concept for autonomous agents on ARC, settling in USDC.",
           logo: "/brand/apa-logo.png",
         }),
       },
@@ -154,20 +157,25 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <LoadingScreen />
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-1">
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
-      </WalletProvider>
+      <WagmiProvider config={wagmiConfig}>
+        <WalletProvider>
+          {mounted ? null : <div aria-hidden style={{ display: "none" }} />}
+          <LoadingScreen />
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </main>
+            <Footer />
+          </div>
+        </WalletProvider>
+      </WagmiProvider>
     </QueryClientProvider>
   );
 }

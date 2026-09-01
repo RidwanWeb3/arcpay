@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
-import { makeActivityEvent } from "@/lib/demoData";
+import { makeFallbackActivity, useActivityFeed } from "@/lib/live/adapters";
 import type { ActivityEvent } from "@/types";
 import { CyberButton, DataPanel, MetricCard, StatusIndicator } from "@/components/kit/primitives";
 import { TerminalWindow } from "@/components/kit/TerminalWindow";
@@ -25,17 +25,20 @@ export const Route = createFileRoute("/activity")({
 });
 
 function ActivityPage() {
-  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const { data: LIVE, isFetching, refetch } = useActivityFeed();
+  const [synth, setSynth] = useState<ActivityEvent[]>([]);
   const [running, setRunning] = useState(true);
 
   useEffect(() => {
     if (!running) return;
     const t = setInterval(() => {
-      setEvents((e) => [makeActivityEvent(), ...e].slice(0, 60));
+      setSynth((e) => [makeFallbackActivity(), ...e].slice(0, LIVE.length < 5 ? 30 : 0));
     }, 1600);
     return () => clearInterval(t);
-  }, [running]);
+  }, [running, LIVE.length]);
 
+  const events = [...LIVE, ...synth].slice(0, 60);
+  void isFetching; void refetch;
   const volume = events.reduce((s, e) => s + (e.amount ?? 0), 0);
 
   return (
@@ -49,7 +52,7 @@ function ActivityPage() {
           <CyberButton size="sm" variant={running ? "danger" : "primary"} onClick={() => setRunning((r) => !r)}>
             {running ? "PAUSE STREAM" : "RESUME STREAM"}
           </CyberButton>
-          <CyberButton size="sm" variant="ghost" onClick={() => setEvents([])}>
+          <CyberButton size="sm" variant="ghost" onClick={() => setSynth([])}>
             CLEAR BUFFER
           </CyberButton>
         </>

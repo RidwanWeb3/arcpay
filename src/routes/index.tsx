@@ -15,9 +15,8 @@ import {
 import { AgentCard, ServiceCard } from "@/components/kit/cards";
 import { SystemStatusBar } from "@/components/home/SystemStatusBar";
 import { DemoTerminal } from "@/components/home/DemoTerminal";
-import { AGENTS, SERVICES } from "@/lib/demoData";
+import { useAgents, useServices, useDashboardSeries } from "@/lib/live/adapters";
 import { LineChartPanel } from "@/components/kit/ChartPanel";
-import { DASHBOARD_SERIES } from "@/lib/demoData";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -72,7 +71,17 @@ const LOOP = [
   { s: "RESOURCE", d: "Provider releases the payload. Task completes." },
 ];
 
+type LabeledSeries = { label: string; value: number };
+function seriesToNumbers(input: number[] | LabeledSeries[]): number[] {
+  if (input.length === 0) return [];
+  if (typeof input[0] === "number") return input as number[];
+  return (input as LabeledSeries[]).map((i) => i.value);
+}
+
 function Index() {
+  const { data: AGENTS } = useAgents();
+  const { data: SERVICES } = useServices();
+  const { data: DASHBOARD_SERIES } = useDashboardSeries();
   const featured = AGENTS.slice(0, 3);
   const services = SERVICES.slice(0, 3);
 
@@ -239,8 +248,8 @@ function Index() {
           right={<LinkButton to="/dashboard" size="sm">FULL DASHBOARD</LinkButton>}
         />
         <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <LineChartPanel title="AGENT ACTIVITY" data={DASHBOARD_SERIES.agentActivity} />
-          <LineChartPanel title="PAYMENT VOLUME" data={DASHBOARD_SERIES.paymentVolume} />
+          <LineChartPanel title="AGENT ACTIVITY" data={seriesToNumbers(DASHBOARD_SERIES.agentActivity)} />
+          <LineChartPanel title="PAYMENT VOLUME" data={seriesToNumbers(DASHBOARD_SERIES.paymentVolume)} />
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="AGENTS REGISTERED" value={String(AGENTS.length)} sub="DEMO REGISTRY" tone="accent" />

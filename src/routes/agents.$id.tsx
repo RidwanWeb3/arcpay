@@ -1,14 +1,20 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import type { AgentPayment, AgentTask, AgentLogLine } from "@/types";
 import { PageShell } from "@/components/layout/PageShell";
-import { AGENTS } from "@/lib/demoData";
+import { fetchLiveAgents, useAgent } from "@/lib/live/adapters";
 import { CyberCard, DataPanel, LinkButton, MetricCard, StatusIndicator } from "@/components/kit/primitives";
 import { TerminalWindow, LogLine } from "@/components/kit/TerminalWindow";
 import { LineChartPanel } from "@/components/kit/ChartPanel";
 import { AgentStatus } from "@/components/kit/cards";
+import type { Agent } from "@/types";
 
 export const Route = createFileRoute("/agents/$id")({
-  loader: ({ params }) => {
-    const agent = AGENTS.find((a) => a.id === params.id);
+  loader: async ({ params, context }) => {
+    const agents = (await context.queryClient.ensureQueryData({
+      queryKey: ["arcpay", "agents"],
+      queryFn: () => fetchLiveAgents(),
+    })) as Agent[];
+    const agent = agents.find((a: Agent) => a.id === params.id);
     if (!agent) throw notFound();
     return { agent };
   },
@@ -32,7 +38,9 @@ export const Route = createFileRoute("/agents/$id")({
 });
 
 function AgentDetail() {
-  const { agent } = Route.useLoaderData();
+  const { agent: loaderAgent } = Route.useLoaderData();
+  const { agent: liveAgent } = useAgent(loaderAgent.id);
+  const agent = liveAgent ?? loaderAgent;
   const p = agent.policy;
 
   return (
