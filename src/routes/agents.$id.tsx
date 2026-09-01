@@ -138,7 +138,7 @@ function AgentDetail() {
             </p>
           </CyberCard>
 
-          <DataPanel title="SPENDING POLICY" right={<StatusIndicator tone="warning" label={p.riskMode} />}>
+          <DataPanel title="SPENDING POLICY" right={<StatusIndicator tone="idle" label={p.riskMode} />}>
             <dl className="space-y-2 font-mono text-[11px]">
               <Row k="MAX DAILY SPEND" v={`${p.maxDailySpend} USDC`} />
               <Row k="MAX PER TX" v={`${p.maxPerTransaction} USDC`} />

@@ -66,7 +66,7 @@ function ActivityPage() {
         <TerminalWindow
           title="APA://ACTIVITY/STREAM"
           mode="DEMO"
-          footer={<StatusIndicator tone={running ? "online" : "warning"} label={running ? "STREAMING" : "HALTED"} />}
+          footer={<StatusIndicator tone={running ? "online" : "idle"} label={running ? "STREAMING" : "HALTED"} />}
         >
           <div className="h-[480px] overflow-y-auto">
             {events.length === 0 ? (

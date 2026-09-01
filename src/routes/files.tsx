@@ -155,7 +155,7 @@ function FilesPage() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <DataPanel title="STORED FILES" right={<StatusIndicator tone={busy ? "warning" : "online"} label={busy ? "BUSY" : "READY"} />}>
+        <DataPanel title="STORED FILES" right={<StatusIndicator tone={busy ? "idle" : "online"} label={busy ? "BUSY" : "READY"} />}>
           {files.length === 0 ? (
             <p className="font-mono text-[12px] text-muted-foreground">VAULT EMPTY — upload a file to begin.</p>
           ) : (

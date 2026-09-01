@@ -106,7 +106,7 @@ function CreateAgent() {
             </div>
           </DataPanel>
 
-          <DataPanel title="03 · SPENDING POLICY" right={<StatusIndicator tone="warning" label={risk} />}>
+          <DataPanel title="03 · SPENDING POLICY" right={<StatusIndicator tone="idle" label={risk} />}>
             <Slider label="MAX PER TRANSACTION" value={perTx} min={1} max={100} onChange={setPerTx} unit="USDC" />
             <Slider label="MAX DAILY SPEND" value={daily} min={5} max={1000} step={5} onChange={setDaily} unit="USDC" />
             <Slider label="SESSION DURATION" value={session} min={15} max={480} step={15} onChange={setSession} unit="MIN" />

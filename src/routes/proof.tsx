@@ -96,8 +96,8 @@ function ProofPage() {
           subtitle="Read the underlying material before drawing conclusions from any interface — including this one."
         />
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {REFS.map((r) => (
-            <ProofCard key={r.href} title={r.title} source={r.source} href={r.href} description={r.description} />
+          {REFS.map((r, i) => (
+            <ProofCard key={r.href} index={String(i + 1).padStart(2, "0")} title={r.title} source={r.source} href={r.href} body={r.description} />
           ))}
         </div>
       </section>
