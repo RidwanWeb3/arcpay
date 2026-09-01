@@ -10,33 +10,206 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as ArcRouteImport } from './routes/arc'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FilesRouteImport } from './routes/files'
+import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as ProofRouteImport } from './routes/proof'
+import { Route as TerminalRouteImport } from './routes/terminal'
+import { Route as AgentsIndexRouteImport } from './routes/agents.index'
+import { Route as AgentsIdRouteImport } from './routes/agents.$id'
+import { Route as AgentsCreateRouteImport } from './routes/agents.create'
+import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as ServicesIdRouteImport } from './routes/services.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArcRoute = ArcRouteImport.update({
+  id: '/arc',
+  path: '/arc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilesRoute = FilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProofRoute = ProofRouteImport.update({
+  id: '/proof',
+  path: '/proof',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminalRoute = TerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsIndexRoute = AgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsIdRoute = AgentsIdRouteImport.update({
+  id: '/agents/$id',
+  path: '/agents/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsCreateRoute = AgentsCreateRouteImport.update({
+  id: '/agents/create',
+  path: '/agents/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesIndexRoute = ServicesIndexRouteImport.update({
+  id: '/services/',
+  path: '/services/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesIdRoute = ServicesIdRouteImport.update({
+  id: '/services/$id',
+  path: '/services/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
+  '/dashboard': typeof DashboardRoute
+  '/files': typeof FilesRoute
+  '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
+  '/terminal': typeof TerminalRoute
+  '/agents/$id': typeof AgentsIdRoute
+  '/agents/create': typeof AgentsCreateRoute
+  '/services/$id': typeof ServicesIdRoute
+  '/agents/': typeof AgentsIndexRoute
+  '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
+  '/dashboard': typeof DashboardRoute
+  '/files': typeof FilesRoute
+  '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
+  '/terminal': typeof TerminalRoute
+  '/agents/$id': typeof AgentsIdRoute
+  '/agents/create': typeof AgentsCreateRoute
+  '/services/$id': typeof ServicesIdRoute
+  '/agents': typeof AgentsIndexRoute
+  '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
+  '/dashboard': typeof DashboardRoute
+  '/files': typeof FilesRoute
+  '/payments': typeof PaymentsRoute
+  '/proof': typeof ProofRoute
+  '/terminal': typeof TerminalRoute
+  '/agents/$id': typeof AgentsIdRoute
+  '/agents/create': typeof AgentsCreateRoute
+  '/services/$id': typeof ServicesIdRoute
+  '/agents/': typeof AgentsIndexRoute
+  '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/activity'
+    | '/arc'
+    | '/dashboard'
+    | '/files'
+    | '/payments'
+    | '/proof'
+    | '/terminal'
+    | '/agents/$id'
+    | '/agents/create'
+    | '/services/$id'
+    | '/agents/'
+    | '/services/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/activity'
+    | '/arc'
+    | '/dashboard'
+    | '/files'
+    | '/payments'
+    | '/proof'
+    | '/terminal'
+    | '/agents/$id'
+    | '/agents/create'
+    | '/services/$id'
+    | '/agents'
+    | '/services'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/activity'
+    | '/arc'
+    | '/dashboard'
+    | '/files'
+    | '/payments'
+    | '/proof'
+    | '/terminal'
+    | '/agents/$id'
+    | '/agents/create'
+    | '/services/$id'
+    | '/agents/'
+    | '/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ActivityRoute: typeof ActivityRoute
+  ArcRoute: typeof ArcRoute
+  DashboardRoute: typeof DashboardRoute
+  FilesRoute: typeof FilesRoute
+  PaymentsRoute: typeof PaymentsRoute
+  ProofRoute: typeof ProofRoute
+  TerminalRoute: typeof TerminalRoute
+  AgentsIdRoute: typeof AgentsIdRoute
+  AgentsCreateRoute: typeof AgentsCreateRoute
+  ServicesIdRoute: typeof ServicesIdRoute
+  AgentsIndexRoute: typeof AgentsIndexRoute
+  ServicesIndexRoute: typeof ServicesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +221,115 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arc': {
+      id: '/arc'
+      path: '/arc'
+      fullPath: '/arc'
+      preLoaderRoute: typeof ArcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/files': {
+      id: '/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof FilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proof': {
+      id: '/proof'
+      path: '/proof'
+      fullPath: '/proof'
+      preLoaderRoute: typeof ProofRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminal': {
+      id: '/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof TerminalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/': {
+      id: '/agents/'
+      path: '/agents'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof AgentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/$id': {
+      id: '/agents/$id'
+      path: '/agents/$id'
+      fullPath: '/agents/$id'
+      preLoaderRoute: typeof AgentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/create': {
+      id: '/agents/create'
+      path: '/agents/create'
+      fullPath: '/agents/create'
+      preLoaderRoute: typeof AgentsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/': {
+      id: '/services/'
+      path: '/services'
+      fullPath: '/services/'
+      preLoaderRoute: typeof ServicesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/$id': {
+      id: '/services/$id'
+      path: '/services/$id'
+      fullPath: '/services/$id'
+      preLoaderRoute: typeof ServicesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ActivityRoute: ActivityRoute,
+  ArcRoute: ArcRoute,
+  DashboardRoute: DashboardRoute,
+  FilesRoute: FilesRoute,
+  PaymentsRoute: PaymentsRoute,
+  ProofRoute: ProofRoute,
+  TerminalRoute: TerminalRoute,
+  AgentsIdRoute: AgentsIdRoute,
+  AgentsCreateRoute: AgentsCreateRoute,
+  ServicesIdRoute: ServicesIdRoute,
+  AgentsIndexRoute: AgentsIndexRoute,
+  ServicesIndexRoute: ServicesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
