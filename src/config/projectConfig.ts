@@ -22,8 +22,8 @@ export const projectConfig = {
   BUY_URL: env["VITE_BUY_URL"] ?? "https://RADARDEX.pro",
   CHART_URL: env["VITE_CHART_URL"] ?? "https://RADARDEX.pro",
 
-  /** Only X is supported. Empty until an official handle is provided. */
-  X_URL: env["VITE_X_URL"] ?? "",
+  /** Public X/Twitter handle for ArcPay Agent. */
+  X_URL: env["VITE_X_URL"] ?? "https://x.com/ArcPayAgent",
 
   /** Global data mode. Flip to "LIVE" once real ARC APIs are wired in. */
   DATA_MODE: (env["VITE_DATA_MODE"] as "DEMO" | "LIVE") ?? "DEMO",
