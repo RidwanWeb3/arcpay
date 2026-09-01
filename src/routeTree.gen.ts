@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as AgentsIndexRouteImport } from './routes/agents.index'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const ActivityRoute = ActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -68,6 +74,7 @@ const ServicesIdRoute = ServicesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/terminal': typeof TerminalRoute
   '/agents/$id': typeof AgentsIdRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activity'
+    | '/dashboard'
     | '/payments'
     | '/terminal'
     | '/agents/$id'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activity'
+    | '/dashboard'
     | '/payments'
     | '/terminal'
     | '/agents/$id'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activity'
+    | '/dashboard'
     | '/payments'
     | '/terminal'
     | '/agents/$id'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
+  DashboardRoute: typeof DashboardRoute
   PaymentsRoute: typeof PaymentsRoute
   TerminalRoute: typeof TerminalRoute
   AgentsIdRoute: typeof AgentsIdRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
+  DashboardRoute: DashboardRoute,
   PaymentsRoute: PaymentsRoute,
   TerminalRoute: TerminalRoute,
   AgentsIdRoute: AgentsIdRoute,
