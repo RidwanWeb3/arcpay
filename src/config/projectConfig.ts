@@ -49,6 +49,7 @@ export const OFFICIAL_SOURCES = {
 export const NAV_LINKS = [
   { label: "HOME", to: "/" },
   { label: "AGENTS", to: "/agents" },
+  { label: "RUNTIME", to: "/runtime" },
   { label: "TERMINAL", to: "/terminal" },
   { label: "SERVICES", to: "/services" },
   { label: "PAYMENTS", to: "/payments" },
