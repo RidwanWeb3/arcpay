@@ -141,7 +141,7 @@ function Index() {
             <div className="min-w-0">
               <CyberCard className="hud-corners overflow-hidden p-0">
                 <img
-                  src={BANNER_SRC}
+                  src="/brand/apa-banner.png"
                   alt="ARCPAY AGENT — APA brand banner: automate, participate, earn"
                   className="w-full object-cover"
                   width={1200}
