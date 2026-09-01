@@ -18,9 +18,11 @@ import {
   useService,
   useAgents,
   insertPayment,
+  updatePayment,
   insertActivity,
 } from "@/lib/live/adapters";
 import { isDemoMode, projectConfig } from "@/config/projectConfig";
+import { targetArcChain } from "@/lib/arc/chains";
 import type { Service } from "@/types";
 import { ServiceStatusValue } from "@/types";
 
@@ -166,6 +168,8 @@ function ServiceDetail() {
   const [executing, setExecuting] = useState(false);
   const [response, setResponse] = useState<string>("");
   const [responseChannel, setResponseChannel] = useState<"API" | "DEMO">("DEMO");
+  const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
+  const [stageError, setStageError] = useState<string | null>(null);
   const nonceRef = useRef<string>(cryptoRandomHex(16));
   const stageStartedAt = useRef<Record<number, number>>({});
 
@@ -184,6 +188,8 @@ function ServiceDetail() {
     setSigning(false);
     setResponse("");
     setResponseChannel("DEMO");
+    setLastPaymentId(null);
+    setStageError(null);
     nonceRef.current = cryptoRandomHex(16);
   }, [currentService.id]);
 
@@ -204,6 +210,7 @@ function ServiceDetail() {
   const beginAuthorize = useCallback(async () => {
     if (signing) return;
     setSigning(true);
+    setStageError(null);
     try {
       const res = await wallet.signPaymentAuthorization({
         serviceId: currentService.id,
@@ -215,7 +222,7 @@ function ServiceDetail() {
       });
       setSignature(res.signature);
       try {
-        await insertPayment({
+        const row = await insertPayment({
           service_id: currentService.id,
           agent_id: null,
           payer: wallet.address ?? "0x",
@@ -223,12 +230,22 @@ function ServiceDetail() {
           amount: Number(currentService.price),
           asset: currentService.paymentAsset,
           network: currentService.network,
+          chain_id: wallet.chainId ?? Number(targetArcChain.id),
           nonce: nonceRef.current,
           signature: res.signature,
+          authorization_message: res.message,
+          authorization_nonce: nonceRef.current,
           tx_hash: null,
+          block_number: null,
           status: "AUTHORIZED",
+          authorized_at: new Date().toISOString(),
+          broadcast_at: null,
           settled_at: null,
+          expired_at: null,
+          failed_at: null,
+          failure_reason: null,
         });
+        if (row) setLastPaymentId(row.id);
         await insertActivity({
           time: formatNow(),
           actor: wallet.address ? `${wallet.address.slice(0, 8)}…${wallet.address.slice(-4)}` : "USER",
@@ -243,6 +260,7 @@ function ServiceDetail() {
       }
     } catch {
       setSignature(`0x${"F".repeat(64)}` as `0x${string}`);
+      setStageError("User rejected signature");
     } finally {
       setSigning(false);
     }
@@ -259,24 +277,129 @@ function ServiceDetail() {
     if (stage !== 2) return;
     if (executing) return;
     setExecuting(true);
+    setStageError(null);
     const abort = new AbortController();
     (async () => {
       try {
+        const wagmiReallyConnected =
+          wallet.connected && !wallet.simulated && Boolean(wallet.address);
+        const toAddr = currentService.providerWallet as `0x${string}`;
+        const price = Number(currentService.price);
+        const settlementLive = wagmiReallyConnected;
+        if (settlementLive) {
+          const bal = wallet.balanceDecimal ?? 0;
+          if (bal < price) {
+            throw new Error(
+              `Insufficient USDC balance (${bal.toFixed(6)} / ${price.toFixed(6)})`,
+            );
+          }
+          if (!lastPaymentId) {
+            throw new Error("Missing payment record id");
+          }
+          try {
+            const { hash, waitConfirmations } = await wallet.sendUsdc({
+              to: toAddr,
+              amountUsdc: price,
+            });
+            await updatePayment(lastPaymentId, {
+              status: "BROADCAST",
+              tx_hash: hash,
+              broadcast_at: new Date().toISOString(),
+            });
+            await insertActivity({
+              time: formatNow(),
+              actor: wallet.address ? `${wallet.address.slice(0, 8)}…${wallet.address.slice(-4)}` : "USER",
+              action: "broadcast",
+              target: currentService.name,
+              amount: price,
+              channel: "NETWORK",
+              severity: "INFO",
+            });
+            const receipt = await waitConfirmations(1);
+            if (receipt.status === "success") {
+              await updatePayment(lastPaymentId, {
+                status: "SETTLED",
+                settled_at: new Date().toISOString(),
+                block_number: receipt.blockNumber ? Number(receipt.blockNumber) : null,
+                failure_reason: null,
+              });
+              await insertActivity({
+                time: formatNow(),
+                actor: wallet.address ? `${wallet.address.slice(0, 8)}…${wallet.address.slice(-4)}` : "USER",
+                action: "settled",
+                target: currentService.name,
+                amount: price,
+                channel: "PAYMENT",
+                severity: "SUCCESS",
+              });
+            } else {
+              await updatePayment(lastPaymentId, {
+                status: "FAILED",
+                failed_at: new Date().toISOString(),
+                failure_reason: `Transaction reverted (block #${
+                  receipt.blockNumber?.toString() ?? "unknown"
+                })`,
+              });
+              await insertActivity({
+                time: formatNow(),
+                actor: wallet.address ? `${wallet.address.slice(0, 8)}…${wallet.address.slice(-4)}` : "USER",
+                action: "failed",
+                target: currentService.name,
+                amount: price,
+                channel: "PAYMENT",
+                severity: "ERROR",
+              });
+              throw new Error("Transaction reverted on-chain");
+            }
+          } catch (err) {
+            const msg = (err as { message?: string } | undefined)?.message;
+            const humanMsg =
+              String(msg ?? "").includes("User rejected") ||
+              String(msg ?? "").includes("UserRejectedRequest") ||
+              String(msg ?? "").includes("rejected")
+                ? "User rejected transaction"
+                : msg ?? "Settlement error";
+            await updatePayment(lastPaymentId, {
+              status: "FAILED",
+              failed_at: new Date().toISOString(),
+              failure_reason: humanMsg,
+            });
+            await insertActivity({
+              time: formatNow(),
+              actor: wallet.address ? `${wallet.address.slice(0, 8)}…${wallet.address.slice(-4)}` : "USER",
+              action: "failed",
+              target: currentService.name,
+              amount: price,
+              channel: "PAYMENT",
+              severity: "ERROR",
+            });
+            throw new Error(humanMsg);
+          }
+        } else {
+          // Demo simulation
+        }
         const keys = envApiKeys();
         const { result, channel } = await callLiveProvider(currentService, keys);
         setResponse(result);
         setResponseChannel(channel);
-      } catch {
+      } catch (err) {
+        const msg =
+          (err as { message?: string } | undefined)?.message ??
+          "Provider call failed";
+        setStageError(msg);
         setResponse(currentService.exampleResponse);
         setResponseChannel("DEMO");
       } finally {
         if (!abort.signal.aborted) setExecuting(false);
       }
-    })().catch(() => {
-      if (!abort.signal.aborted) setExecuting(false);
+    })().catch((err) => {
+      if (!abort.signal.aborted) {
+        setExecuting(false);
+        setStageError((err as { message?: string } | undefined)?.message ?? "Settlement error");
+      }
     });
     return () => abort.abort();
-  }, [stage, currentService, executing]);
+  }, [stage, currentService, executing, wallet, lastPaymentId]);
 
   /* ── Stage state machine with logs ───────────────────── */
   useEffect(() => {
@@ -406,6 +529,8 @@ function ServiceDetail() {
     setTerminalLines([]);
     setResponse("");
     setResponseChannel("DEMO");
+    setLastPaymentId(null);
+    setStageError(null);
     nonceRef.current = cryptoRandomHex(16);
     if (!wallet.connected) wallet.connect();
     if (wallet.connected && !wallet.isCorrectChain) wallet.switchToArc();
@@ -544,6 +669,11 @@ components:
             title="402 PAYMENT FLOW"
             right={<StatusIndicator tone={statusTone} label={currentService.status} pulse={running} />}
           >
+            {stageError ? (
+              <p className="mb-3 border border-destructive/40 bg-destructive/10 px-3 py-2 font-mono text-[11px] text-destructive break-all">
+                {stageError}
+              </p>
+            ) : null}
             <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {(Object.keys(PAY_LABELS) as unknown as Array<Exclude<PayStage, -1>>)
                 .map((k) => Number(k) as Exclude<PayStage, -1>)

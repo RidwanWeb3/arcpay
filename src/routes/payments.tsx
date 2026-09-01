@@ -1,22 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { useAgents, useServices, usePayments } from "@/lib/live/adapters";
-import { CyberButton, CyberCard, DataPanel, MetricCard, LinkButton } from "@/components/kit/primitives";
-import { PaymentFlow, PAYMENT_STAGES } from "@/components/kit/PaymentFlow";
-import { TerminalWindow, LogLine } from "@/components/kit/TerminalWindow";
+import { CyberCard, DataPanel, MetricCard, LinkButton, ExternalButton } from "@/components/kit/primitives";
 import { cn } from "@/lib/utils";
+import { targetArcChain } from "@/lib/arc/chains";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({
     meta: [
-      { title: "Payment Terminal — ArcPay Agent" },
+      { title: "Payments — ArcPay Agent" },
       {
         name: "description",
         content:
-          "Simulate an agent-to-service payment: request, authorization, verification, settlement and confirmation in USDC on ARC.",
+          "Live payment receipts and transaction history on ARC, settled in USDC native gas.",
       },
-      { property: "og:title", content: "Payment Terminal — ArcPay Agent" },
+      { property: "og:title", content: "Payments — ArcPay Agent" },
       { property: "og:description", content: "Programmable machine payments, bounded by policy, settled in USDC." },
       { property: "og:url", content: "/payments" },
     ],
@@ -25,185 +24,297 @@ export const Route = createFileRoute("/payments")({
   component: PaymentsPage,
 });
 
+function statusTone(s: string): "accent" | "cyan" | "warning" | "success" | "muted" | "destructive" {
+  switch (s) {
+    case "REQUESTED":
+      return "muted";
+    case "AUTHORIZED":
+      return "accent";
+    case "BROADCAST":
+      return "warning";
+    case "SETTLED":
+      return "success";
+    case "FAILED":
+      return "destructive";
+    case "EXPIRED":
+      return "muted";
+    default:
+      return "muted";
+  }
+}
+
+function toneClasses(tone: "accent" | "cyan" | "warning" | "success" | "muted" | "destructive") {
+  switch (tone) {
+    case "accent":
+      return "border-accent/40 bg-accent/10 text-accent";
+    case "cyan":
+      return "border-cyan/40 bg-cyan/10 text-cyan";
+    case "warning":
+      return "border-warning/40 bg-warning/10 text-warning animate-pulse";
+    case "success":
+      return "border-success/40 bg-success/10 text-success";
+    case "muted":
+      return "border-border bg-card text-muted-foreground";
+    case "destructive":
+      return "border-destructive/40 bg-destructive/10 text-destructive";
+  }
+}
+
+function shortAddr(a: string): string {
+  if (!a) return "-";
+  if (a.length <= 10) return a;
+  return `${a.slice(0, 8)}…${a.slice(-6)}`;
+}
+
+function shortHash(a: string): string {
+  if (!a) return "-";
+  if (a.length <= 14) return a;
+  return `${a.slice(0, 10)}…${a.slice(-8)}`;
+}
+
 function PaymentsPage() {
   const { data: AGENTS } = useAgents();
   const { data: SERVICES } = useServices();
-  const { data: PAYMENTS } = usePayments();
-  const [agentId, setAgentId] = useState(AGENTS[0]!.id);
-  const [serviceId, setServiceId] = useState(SERVICES[0]!.id);
-  const [stage, setStage] = useState(-1);
-  const [logs, setLogs] = useState<{ channel: string; message: string; at: string }[]>([]);
-  const [receipts, setReceipts] = useState<{ id: string; amount: number; to: string; at: string }[]>([]);
+  const { data: PAYMENTS, refetch: refetchPayments } = usePayments();
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const agent = AGENTS.find((a) => a.id === agentId)!;
-  const service = SERVICES.find((s) => s.id === serviceId)!;
-  const withinPolicy = service.price <= agent.policy.maxPerTransaction;
-  void PAYMENTS;
+  const explorer = targetArcChain.blockExplorers?.default?.url ?? "https://arc-scan.org";
 
-  useEffect(() => {
-    if (stage < 0 || stage >= PAYMENT_STAGES.length) return;
-    const msgs = [
-      { channel: "SERVICE", message: `402 PAYMENT REQUIRED — ${service.price} USDC for ${service.name}` },
-      {
-        channel: "POLICY",
-        message: withinPolicy
-          ? `Authorized: ${service.price} USDC ≤ ${agent.policy.maxPerTransaction} USDC ceiling`
-          : "REJECTED: amount exceeds per-transaction ceiling",
-      },
-      { channel: "NETWORK", message: "Verifying intent and recipient on ARC (simulated)" },
-      { channel: "PAYMENT", message: `${service.price} USDC → ${service.provider}` },
-      { channel: "SETTLEMENT", message: "Confirmed — receipt issued (simulated)" },
-    ];
-    const t = setTimeout(() => {
-      setLogs((l) => [...l, { ...msgs[stage]!, at: new Date().toTimeString().slice(0, 8) }]);
-      if (stage === 1 && !withinPolicy) {
-        setStage(-2);
-        return;
-      }
-      if (stage === PAYMENT_STAGES.length - 1) {
-        setReceipts((r) => [
-          {
-            id: `PAY-${Math.floor(1000 + Math.random() * 8999)}`,
-            amount: service.price,
-            to: service.name,
-            at: new Date().toTimeString().slice(0, 8),
-          },
-          ...r,
-        ]);
-        setStage(PAYMENT_STAGES.length);
-        return;
-      }
-      setStage((s) => s + 1);
-    }, 750);
-    return () => clearTimeout(t);
-  }, [stage, service, agent, withinPolicy]);
+  const paymentsLen = PAYMENTS.length;
+  const totals = useMemo(() => {
+    const settled = PAYMENTS.filter((p) => p.status === "SETTLED");
+    const sum = settled.reduce((acc, p) => acc + (p.amount ?? 0), 0);
+    return {
+      count: paymentsLen,
+      settled: settled.length,
+      volume: sum,
+      failed: PAYMENTS.filter((p) => p.status === "FAILED").length,
+      pending: PAYMENTS.filter((p) => p.status === "BROADCAST").length,
+    };
+  }, [PAYMENTS, paymentsLen]);
 
-  const run = () => {
-    setLogs([]);
-    setStage(0);
-  };
-
-  const rejected = stage === -2;
-  const done = stage === PAYMENT_STAGES.length;
+  const sorted = useMemo(() => {
+    return [...PAYMENTS].sort((a, b) => {
+      const at = a.settled_at ?? a.broadcast_at ?? a.authorized_at ?? a.requested_at;
+      const bt = b.settled_at ?? b.broadcast_at ?? b.authorized_at ?? b.requested_at;
+      return new Date(bt).getTime() - new Date(at).getTime();
+    });
+  }, [PAYMENTS]);
 
   return (
     <PageShell
       eyebrow="APA://PAYMENTS"
-      title="Payment Terminal"
-      description="Pair an agent with a priced service and watch the full settlement lifecycle. Policy is evaluated before any value moves — the ceiling is the safety mechanism."
+      title="Payment Receipts"
+      description="All payment receipts recorded on ARC. Click any row to expand the full settlement trace, signature, and explorer link."
       wide
       actions={
         <>
-          <CyberButton size="sm" variant="primary" onClick={run}>
-            EXECUTE PAYMENT (SIMULATED)
-          </CyberButton>
           <LinkButton to="/activity" size="sm">ACTIVITY MONITOR</LinkButton>
+          <button
+            type="button"
+            onClick={() => void refetchPayments()}
+            className="inline-flex items-center border border-border bg-card px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] text-muted-foreground hover:text-foreground"
+          >
+            REFRESH
+          </button>
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="PAYER" value={agent.name} sub={agent.wallet} tone="accent" />
-        <MetricCard label="AMOUNT" value={`${service.price} USDC`} sub={`PER ${service.unit.toUpperCase()}`} tone="cyan" />
-        <MetricCard label="TX CEILING" value={`${agent.policy.maxPerTransaction} USDC`} sub={agent.policy.riskMode} />
-        <MetricCard label="NETWORK" value="ARC" sub="STABLE SETTLEMENT" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <MetricCard label="TOTAL" value={String(totals.count)} sub="RECEIPTS" tone="cyan" />
+        <MetricCard label="SETTLED" value={String(totals.settled)} sub="PAYMENTS" tone="accent" />
+        <MetricCard label="PENDING" value={String(totals.pending)} sub="BROADCAST" tone="accent" />
+        <MetricCard label="FAILED" value={String(totals.failed)} sub="PAYMENTS" tone="default" />
+        <MetricCard label="VOLUME" value={`${totals.volume.toFixed(4)} USDC`} sub="ARC SETTLED" tone="accent" />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <div className="grid gap-6">
-          <DataPanel title="SETTLEMENT LIFECYCLE">
-            <PaymentFlow stageIndex={rejected ? 1 : Math.min(stage, PAYMENT_STAGES.length - 1)} />
-            {rejected ? (
-              <p className="mt-3 border border-destructive/40 bg-destructive/10 px-3 py-2 font-mono text-[11px] text-destructive">
-                PAYMENT REJECTED BY POLICY — the agent's per-transaction ceiling is lower than the requested amount.
-              </p>
-            ) : done ? (
-              <p className="mt-3 border border-success/40 bg-success/10 px-3 py-2 font-mono text-[11px] text-success">
-                SETTLEMENT CONFIRMED — SIMULATED TRANSACTION. No funds moved.
-              </p>
-            ) : (
-              <p className="mt-3 font-mono text-[10px] tracking-[0.14em] text-warning">
-                SIMULATED ENVIRONMENT — illustrative amounts only.
-              </p>
-            )}
-          </DataPanel>
-
-          <TerminalWindow title="APA://PAYMENTS/TRACE" mode="SIMULATION">
-            <div className="h-[240px] overflow-y-auto">
-              {logs.length === 0 ? (
-                <p className="text-muted-foreground">Awaiting execution. Select an agent and a service, then execute.</p>
-              ) : (
-                logs.map((l, i) => <LogLine key={i} at={l.at} channel={l.channel} message={l.message} />)
-              )}
-            </div>
-          </TerminalWindow>
-
-          <DataPanel title="RECEIPTS">
-            {receipts.length === 0 ? (
-              <p className="font-mono text-[12px] text-muted-foreground">NO RECEIPTS IN THIS SESSION.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {receipts.map((r) => (
-                  <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5">
-                    <div className="min-w-0">
-                      <div className="truncate font-mono text-[12px] text-silver">→ {r.to}</div>
-                      <div className="label-mono mt-1">{r.id} · {r.at}</div>
-                    </div>
-                    <span className="shrink-0 font-mono text-[11px] text-success">{r.amount.toFixed(4)} USDC</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </DataPanel>
-        </div>
-
-        <div className="grid content-start gap-6">
-          <CyberCard className="p-5">
-            <div className="label-mono text-accent">SELECT AGENT</div>
-            <div className="mt-3 grid gap-2">
-              {AGENTS.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setAgentId(a.id)}
-                  className={cn(
-                    "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border px-3 py-2.5 text-left transition-colors",
-                    agentId === a.id ? "border-accent/60 bg-accent/5" : "border-border hover:border-accent/30",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-mono text-[11px] text-silver">{a.name}</span>
-                    <span className="label-mono">{a.type}</span>
-                  </span>
-                  <span className="shrink-0 font-mono text-[10px] text-cyan">{a.balance.toFixed(2)}</span>
-                </button>
-              ))}
-            </div>
-          </CyberCard>
-
-          <CyberCard className="p-5">
-            <div className="label-mono text-accent">SELECT SERVICE</div>
-            <div className="mt-3 grid gap-2">
-              {SERVICES.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setServiceId(s.id)}
-                  className={cn(
-                    "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border px-3 py-2.5 text-left transition-colors",
-                    serviceId === s.id ? "border-accent/60 bg-accent/5" : "border-border hover:border-accent/30",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-mono text-[11px] text-silver">{s.name}</span>
-                    <span className="label-mono">{s.category}</span>
-                  </span>
-                  <span className="shrink-0 font-mono text-[10px] text-cyan">{s.price} USDC</span>
-                </button>
-              ))}
-            </div>
-          </CyberCard>
-        </div>
+      <div className="mt-6">
+        <DataPanel
+          title="LIVE PAYMENTS"
+          right={
+            <span className="label-mono text-warning">
+              {totals.pending > 0 ? `● ${totals.pending} BROADCAST · 15s POLL` : "● QUIESCENT"}
+            </span>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse font-mono text-[11px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">ID</th>
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">TIME</th>
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">SERVICE</th>
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">PAYER</th>
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">PAYEE</th>
+                  <th className="py-2 px-3 text-right tracking-[0.16em] text-muted-foreground">AMOUNT</th>
+                  <th className="py-2 px-3 text-center tracking-[0.16em] text-muted-foreground">STATUS</th>
+                  <th className="py-2 px-3 text-left tracking-[0.16em] text-muted-foreground">TX HASH</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-10 text-center text-muted-foreground">
+                      NO PAYMENTS YET. Navigate to a service and click PAY &amp; EXECUTE to create a real receipt.
+                    </td>
+                  </tr>
+                ) : (
+                  sorted.map((p) => {
+                    const svc = SERVICES.find((s) => s.id === p.service_id);
+                    const tone = statusTone(p.status);
+                    const isOpen = expanded === p.id;
+                    const displayTime = p.settled_at ?? p.broadcast_at ?? p.authorized_at ?? p.requested_at;
+                    const txLink = p.tx_hash ? `${explorer}/tx/${p.tx_hash}` : null;
+                    return (
+                      <>
+                        <tr
+                          key={p.id}
+                          onClick={() => setExpanded(isOpen ? null : p.id)}
+                          className={cn(
+                            "border-b border-border/60 cursor-pointer transition-colors hover:bg-accent/5",
+                            isOpen && "bg-accent/5",
+                          )}
+                        >
+                          <td className="py-2.5 px-3 text-silver">{shortHash(p.id)}</td>
+                          <td className="py-2.5 px-3 text-muted-foreground">
+                            {new Date(displayTime).toLocaleString()}
+                          </td>
+                          <td className="py-2.5 px-3 text-foreground truncate max-w-[160px]">
+                            {svc?.name ?? p.service_id ?? "-"}
+                          </td>
+                          <td className="py-2.5 px-3 text-silver">{shortAddr(p.payer)}</td>
+                          <td className="py-2.5 px-3 text-silver">{shortAddr(p.payee)}</td>
+                          <td className="py-2.5 px-3 text-right text-foreground">
+                            {Number(p.amount).toFixed(4)} USDC
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-none border px-2 py-0.5 text-[10px] tracking-[0.16em]",
+                                toneClasses(tone),
+                              )}
+                            >
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-silver">
+                            {txLink ? (
+                              <ExternalButton href={txLink} size="sm" variant="outline">
+                                {shortHash(p.tx_hash!)}
+                              </ExternalButton>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        </tr>
+                        {isOpen ? (
+                          <tr key={`${p.id}-exp`} className="border-b border-border/60 bg-card/50">
+                            <td colSpan={8} className="p-4">
+                              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <ReceiptField label="PAYMENT ID" value={p.id} mono />
+                                <ReceiptField label="SERVICE" value={svc?.name ?? p.service_id ?? "-"} mono={false} />
+                                <ReceiptField label="AGENT" value={p.agent_id ?? "-"} mono />
+                                <ReceiptField label="NETWORK" value={`${p.network} · chainId ${p.chain_id ?? targetArcChain.id}`} mono />
+                                <ReceiptField label="AMOUNT" value={`${Number(p.amount).toFixed(6)} USDC`} mono />
+                                <ReceiptField label="STATUS" value={p.status} mono>
+                                  <span className={cn("ml-2 inline-block h-1.5 w-1.5", tone === "success" && "bg-success", tone === "warning" && "bg-warning animate-pulse", tone === "destructive" && "bg-destructive", tone === "muted" && "bg-muted-foreground", tone === "accent" && "bg-accent", tone === "cyan" && "bg-cyan")} />
+                                </ReceiptField>
+                                <ReceiptField label="PAYER" value={p.payer} mono link={p.payer.startsWith("0x") ? `${explorer}/address/${p.payer}` : undefined} />
+                                <ReceiptField label="PAYEE" value={p.payee} mono link={p.payee.startsWith("0x") ? `${explorer}/address/${p.payee}` : undefined} />
+                                <ReceiptField label="NONCE" value={p.nonce} mono />
+                                <ReceiptField label="REQUESTED AT" value={p.requested_at} mono />
+                                <ReceiptField label="AUTHORIZED AT" value={p.authorized_at ?? "-"} mono />
+                                <ReceiptField label="BROADCAST AT" value={p.broadcast_at ?? "-"} mono />
+                                <ReceiptField label="SETTLED AT" value={p.settled_at ?? "-"} mono />
+                                <ReceiptField label="EXPIRED AT" value={p.expired_at ?? "-"} mono />
+                                <ReceiptField label="FAILED AT" value={p.failed_at ?? "-"} mono />
+                                <ReceiptField label="BLOCK NUMBER" value={p.block_number != null ? String(p.block_number) : "-"} mono />
+                                <div className="sm:col-span-2">
+                                  <ReceiptField label="TX HASH" value={p.tx_hash ?? "-"} mono link={txLink ?? undefined} />
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <ReceiptField label="AUTHORIZATION MESSAGE" value={p.authorization_message ?? "(not stored)"} mono small />
+                                </div>
+                                <div className="sm:col-span-2 lg:col-span-3">
+                                  <ReceiptField label="SIGNATURE" value={p.signature} mono small />
+                                </div>
+                                {p.failure_reason ? (
+                                  <div className="sm:col-span-2 lg:col-span-3">
+                                    <ReceiptField label="FAILURE REASON" value={p.failure_reason} small error />
+                                  </div>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DataPanel>
+      </div>
+      <div className="mt-6 hidden">
+        <AgentsAndServicesHidden AGENTS={AGENTS} SERVICES={SERVICES} />
       </div>
     </PageShell>
   );
+}
+
+function ReceiptField({
+  label,
+  value,
+  mono,
+  link,
+  small,
+  error,
+  children,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  link?: string | undefined;
+  small?: boolean;
+  error?: boolean;
+  children?: React.ReactNode;
+}) {
+  const textCls = mono ? "font-mono" : "";
+  const sizeCls = small ? "text-[10px]" : "text-[12px]";
+  const hasLink = Boolean(link);
+  return (
+    <div className="border border-border/60 bg-background/40 p-3">
+      <div className="label-mono text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "mt-1 break-all",
+          textCls,
+          sizeCls,
+          error ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {hasLink ? (
+          <ExternalButton href={link!} size="sm" variant="outline">
+            {value}
+          </ExternalButton>
+        ) : (
+          value
+        )}
+        {children ?? null}
+      </div>
+    </div>
+  );
+}
+
+function AgentsAndServicesHidden({
+  AGENTS,
+  SERVICES,
+}: {
+  AGENTS: ReturnType<typeof useAgents>["data"];
+  SERVICES: ReturnType<typeof useServices>["data"];
+}) {
+  void AGENTS;
+  void SERVICES;
+  return null;
 }

@@ -48,11 +48,24 @@ type AnySupabase = {
     select(columns?: string): {
       order(column: string, options?: { ascending?: boolean }): {
         limit(count: number): PromiseLike<{ data: unknown; error: unknown }>;
+      } & {
+        eq(column: string, value: unknown): unknown;
       } & PromiseLike<{ data: unknown; error: unknown }>;
+    } & {
+      eq(column: string, value: unknown): unknown;
+    } & {
+      gte(column: string, value: unknown): unknown;
     } & PromiseLike<{ data: unknown; error: unknown }>;
     insert(rows: unknown[]): {
       select(): {
         maybeSingle(): PromiseLike<{ data: unknown; error: unknown }>;
+      } & PromiseLike<{ data: unknown; error: unknown }>;
+    } & PromiseLike<{ data: unknown; error: unknown }>;
+    update(patch: unknown): {
+      eq(column: string, value: unknown): {
+        select(): {
+          maybeSingle(): PromiseLike<{ data: unknown; error: unknown }>;
+        } & PromiseLike<{ data: unknown; error: unknown }>;
       } & PromiseLike<{ data: unknown; error: unknown }>;
     } & PromiseLike<{ data: unknown; error: unknown }>;
   };
@@ -106,19 +119,28 @@ type SbAgentRow = {
 
 type SbPaymentRow = {
   id: string;
-  service_id: string;
+  service_id: string | null;
   agent_id: string | null;
   payer: string;
   payee: string;
   amount: number;
   asset: string;
   network: string;
+  chain_id: number;
   nonce: string;
   signature: string;
   tx_hash: string | null;
-  status: "AUTHORIZED" | "BROADCAST" | "SETTLED" | "FAILED";
+  block_number: number | null;
+  status: "REQUESTED" | "AUTHORIZED" | "BROADCAST" | "SETTLED" | "EXPIRED" | "FAILED";
+  authorization_nonce?: string | null;
+  authorization_message?: string | null;
   requested_at: string;
+  authorized_at: string | null;
+  broadcast_at: string | null;
   settled_at: string | null;
+  expired_at: string | null;
+  failed_at: string | null;
+  failure_reason: string | null;
 };
 
 type SbActivityRow = {
@@ -399,6 +421,17 @@ export async function insertPayment(p: Omit<SbPaymentRow, "id" | "requested_at">
   if (!isSupabaseConfigured()) return null;
   const row: Omit<SbPaymentRow, "id" | "requested_at"> = p;
   const { data, error } = await sbTable("payments").insert([row]).select().maybeSingle();
+  if (error || !data) return null;
+  return data as unknown as SbPaymentRow;
+}
+
+/* ── Update payment status + side-channel fields ───────── */
+export async function updatePayment(
+  id: string,
+  patch: Partial<Omit<SbPaymentRow, "id" | "requested_at" | "payer" | "payee" | "amount" | "chain_id" | "asset" | "network">>,
+): Promise<SbPaymentRow | null> {
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await sbTable("payments").update(patch).eq("id", id).select().maybeSingle();
   if (error || !data) return null;
   return data as unknown as SbPaymentRow;
 }
