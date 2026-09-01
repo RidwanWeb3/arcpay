@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as ArcRouteImport } from './routes/arc'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as ProofRouteImport } from './routes/proof'
@@ -35,6 +36,11 @@ const AboutRoute = AboutRouteImport.update({
 const ActivityRoute = ActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArcRoute = ArcRouteImport.update({
+  id: '/arc',
+  path: '/arc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/proof': typeof ProofRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/proof': typeof ProofRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/arc': typeof ArcRoute
   '/dashboard': typeof DashboardRoute
   '/payments': typeof PaymentsRoute
   '/proof': typeof ProofRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activity'
+    | '/arc'
     | '/dashboard'
     | '/payments'
     | '/proof'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activity'
+    | '/arc'
     | '/dashboard'
     | '/payments'
     | '/proof'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activity'
+    | '/arc'
     | '/dashboard'
     | '/payments'
     | '/proof'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ActivityRoute: typeof ActivityRoute
+  ArcRoute: typeof ArcRoute
   DashboardRoute: typeof DashboardRoute
   PaymentsRoute: typeof PaymentsRoute
   ProofRoute: typeof ProofRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arc': {
+      id: '/arc'
+      path: '/arc'
+      fullPath: '/arc'
+      preLoaderRoute: typeof ArcRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -279,6 +299,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivityRoute: ActivityRoute,
+  ArcRoute: ArcRoute,
   DashboardRoute: DashboardRoute,
   PaymentsRoute: PaymentsRoute,
   ProofRoute: ProofRoute,
