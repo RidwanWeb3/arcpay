@@ -19,6 +19,7 @@ import { WalletProvider } from "@/hooks/useWallet";
 import { CyberCard, LinkButton, CyberButton } from "@/components/kit/primitives";
 import { BrandLogo } from "@/components/kit/cards";
 import { wagmiConfig } from "@/lib/arc/wagmiConfig";
+import { OG_IMAGE_SRC, LOGO_SRC } from "@/config/projectConfig";
 
 function ErrorFrame({
   code,
@@ -107,7 +108,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#02040A" },
       { property: "og:site_name", content: "ArcPay Agent" },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: OG_IMAGE_SRC },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:alt", content: "ArcPay Agent APA logo" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: OG_IMAGE_SRC },
+      { name: "twitter:image:alt", content: "ArcPay Agent APA logo" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -117,8 +123,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", href: LOGO_SRC, type: "image/png" },
+      { rel: "apple-touch-icon", href: LOGO_SRC },
     ],
     scripts: [
       {
@@ -130,7 +136,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           alternateName: "APA",
           description:
             "Payment infrastructure concept for autonomous agents on ARC, settling in USDC.",
-          logo: "/brand/apa-logo.png",
+          logo: LOGO_SRC,
         }),
       },
     ],

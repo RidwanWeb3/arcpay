@@ -33,8 +33,9 @@ export const isContractAvailable = projectConfig.CONTRACT_ADDRESS !== "COMING_SO
 export const isXConfigured = projectConfig.X_URL.trim().length > 0;
 export const isDemoMode = projectConfig.DATA_MODE === "DEMO";
 
-export const LOGO_SRC = "/brand/apa-logo.png";
-export const BANNER_SRC = "/brand/apa-banner.png";
+export const LOGO_SRC = "/brand/APALOGO.png";
+export const OG_IMAGE_SRC = "/brand/APALOGO.png";
+export const BANNER_SRC = "/brand/APALOGO.png";
 
 export const OFFICIAL_SOURCES = {
   circleAgentStackBlog:

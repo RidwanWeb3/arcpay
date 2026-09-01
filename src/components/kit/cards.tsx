@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { Agent, AgentStatusValue, Service } from "@/types";
 import { CyberCard, StatusIndicator, LinkButton, ExternalButton } from "./primitives";
 import { cn } from "@/lib/utils";
+import { LOGO_SRC } from "@/config/projectConfig";
 
 const statusTone: Record<AgentStatusValue, "online" | "busy" | "idle" | "offline"> = {
   ONLINE: "online",
@@ -293,7 +294,7 @@ export function AgentTabLink({
 export function BrandLogo({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <img
-      src="/brand/apa-logo.png"
+      src={LOGO_SRC}
       alt="ArcPay Agent APA logo"
       width={size}
       height={size}
